@@ -1,0 +1,14 @@
+{"query": "How does Reciprocal Rank Fusion combine dense and BM25 rankings and why does it avoid score normalization?", "expected_docs": ["rrf", "hybrid-retrieval"], "unanswerable": false}
+{"query": "What is the default value of the constant K in RRF and where does it come from?", "expected_docs": ["rrf"], "unanswerable": false}
+{"query": "What do the BM25 parameters k1 and b control and what are their typical values?", "expected_docs": ["bm25"], "unanswerable": false}
+{"query": "How does an HNSW index achieve fast approximate nearest neighbor search?", "expected_docs": ["hnsw"], "unanswerable": false}
+{"query": "What is the embedding dimension of bge-small-en-v1.5 and what query prefix does it require?", "expected_docs": ["bge-embeddings"], "unanswerable": false}
+{"query": "Why does a cross-encoder produce better relevance scores than a bi-encoder?", "expected_docs": ["cross-encoder-rerank"], "unanswerable": false}
+{"query": "What three metrics make up the RAG Triad and what does each one localize?", "expected_docs": ["rag-triad"], "unanswerable": false}
+{"query": "How does PagedAttention reduce memory waste in vLLM?", "expected_docs": ["paged-attention"], "unanswerable": false}
+{"query": "What is continuous batching and how does it differ from static batching?", "expected_docs": ["continuous-batching"], "unanswerable": false}
+{"query": "How does LangGraph checkpointing support multi-turn conversations without resending history?", "expected_docs": ["langgraph-checkpointing"], "unanswerable": false}
+{"query": "How does the system avoid duplicate chunks when documents are re-ingested?", "expected_docs": ["idempotent-ingestion"], "unanswerable": false}
+{"query": "Why does the system refuse to answer when the evidence is thin?", "expected_docs": ["grounded-refusal"], "unanswerable": false}
+{"query": "What is the airspeed velocity of an unladen swallow?", "expected_docs": [], "unanswerable": true}
+{"query": "Who won the 2024 UEFA Champions League final and what was the final score?", "expected_docs": [], "unanswerable": true}

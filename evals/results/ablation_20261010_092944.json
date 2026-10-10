@@ -1,0 +1,24 @@
+{
+  "mode": "ablation",
+  "golden_items": 14,
+  "arms": {
+    "dense": {
+      "recall@5": 1.0,
+      "mrr": 1.0,
+      "p50_latency_ms": 37.4,
+      "n": 12
+    },
+    "dense+bm25": {
+      "recall@5": 1.0,
+      "mrr": 1.0,
+      "p50_latency_ms": 32.8,
+      "n": 12
+    },
+    "dense+bm25+rerank": {
+      "recall@5": 1.0,
+      "mrr": 1.0,
+      "p50_latency_ms": 388.9,
+      "n": 12
+    }
+  }
+}

@@ -1,0 +1,154 @@
+{
+  "info": {
+    "name": "OmniAgent API",
+    "_postman_id": "b7f3a2c1-omni-agent-0001",
+    "description": "OmniAgent: autonomous multi-agent RAG platform. Endpoints for corpus management, multi-agent research (answer + citations + claim verdicts + reflection trace), health and Prometheus metrics. Set the api_key variable only if API_KEY is configured on the server.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000" },
+    { "key": "api_key", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Ops",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/health", "host": ["{{base_url}}"], "path": ["health"] },
+            "description": "Shallow health: DB ping."
+          }
+        },
+        {
+          "name": "Health (deep)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/health?deep=true",
+              "host": ["{{base_url}}"],
+              "path": ["health"],
+              "query": [{ "key": "deep", "value": "true", "description": "also pings the LLM backend" }]
+            },
+            "description": "Deep health: DB + LLM backend ping."
+          }
+        },
+        {
+          "name": "Metrics (Prometheus)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/metrics", "host": ["{{base_url}}"], "path": ["metrics"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Corpus",
+      "item": [
+        {
+          "name": "List documents",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/v1/documents", "host": ["{{base_url}}"], "path": ["api", "v1", "documents"] },
+            "description": "All indexed documents with chunk counts.",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test(\"status is 200\", () => pm.response.to.have.statusCode(200));",
+                    "pm.test(\"documents is an array\", () => pm.expect(pm.response.json().documents).to.be.an(\"array\"));"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "Ingest corpus (idempotent)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{api_key}}", "disabled": true }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"path\": \"data/sample_corpus\"\n}"
+            },
+            "options": { "raw": { "language": "json" } },
+            "url": { "raw": "{{base_url}}/api/v1/ingest", "host": ["{{base_url}}"], "path": ["api", "v1", "ingest"] },
+            "description": "Ingests a server-side directory. Re-running on an unchanged corpus creates 0 chunks (content-hash dedupe)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Research",
+      "item": [
+        {
+          "name": "Research a question",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{api_key}}", "disabled": true }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"What do the BM25 parameters k1 and b control and what are their typical values?\",\n  \"thread_id\": \"demo-thread\"\n}"
+            },
+            "options": { "raw": { "language": "json" } },
+            "url": { "raw": "{{base_url}}/api/v1/research", "host": ["{{base_url}}"], "path": ["api", "v1", "research"] },
+            "description": "Full multi-agent run: planner -> hybrid retrieval -> synthesizer -> fact-checker, with bounded reflection. Response: answer, citations, verdicts, unsupported_claims, reflection_count, trace. Note: on the 2-vCPU dev box a run takes ~1-3 minutes.",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test(\"status is 200\", () => pm.response.to.have.statusCode(200));",
+                    "const body = pm.response.json();",
+                    "pm.test(\"has answer\", () => pm.expect(body.answer).to.be.a(\"string\"));",
+                    "pm.test(\"has citations array\", () => pm.expect(body.citations).to.be.an(\"array\"));",
+                    "pm.test(\"has claim verdicts\", () => pm.expect(body.verdicts).to.be.an(\"array\"));",
+                    "pm.test(\"reflection_count within budget\", () => pm.expect(body.reflection_count).to.be.at.most(2));"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "Research - unanswerable (refusal demo)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{api_key}}", "disabled": true }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"What is the airspeed velocity of an unladen swallow?\"\n}"
+            },
+            "options": { "raw": { "language": "json" } },
+            "url": { "raw": "{{base_url}}/api/v1/research", "host": ["{{base_url}}"], "path": ["api", "v1", "research"] },
+            "description": "Topic absent from the corpus: expect refused=true and an honest refusal message instead of a hallucinated answer.",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test(\"status is 200\", () => pm.response.to.have.statusCode(200));",
+                    "const body = pm.response.json();",
+                    "pm.test(\"refuses instead of hallucinating\", () => pm.expect(body.refused).to.eql(true));"
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

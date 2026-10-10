@@ -1,0 +1,42 @@
+# OmniAgent infrastructure. Postgres+pgvector by default; the API runs in a
+# venv for development and via the "app" profile when containerized.
+#
+# Security: DB is bound to loopback only. State lives under
+# /opt/omniagent/docker-data for one-shot teardown. Memory limits fit an 8GB host.
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: omniagent-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - /opt/omniagent/docker-data/pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 1g
+
+  app:
+    profiles: ["app"]
+    build: .
+    container_name: omniagent-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_ENV: prod
+      DB_HOST: db
+      LLM_BASE_URL: http://host.docker.internal:11434/v1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:8000:8000"
+    mem_limit: 2g
