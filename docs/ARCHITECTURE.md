@@ -26,7 +26,7 @@ Ollama registry) happen at setup time only; no user data leaves the host.
 
 | Component | Responsibility | Failure behavior |
 |---|---|---|
-| `app/api` | HTTP surface, auth (optional key), metrics, request lifecycle | 503 on LLM outage, 404 unknown ingest path |
+| `app/api` | HTTP surface (sync + SSE streaming), auth (optional key), metrics, request lifecycle | 503 on LLM outage, 404 unknown ingest path |
 | `app/agents` | LangGraph state machine: plan, retrieve, synthesize, verify, finalize | Bounded reflection; refusal on thin evidence |
 | `app/retrieval` | Hybrid search: dense + sparse legs, RRF fusion, cross-encoder rerank | Degrades per-stage via flags; empty result -> refusal |
 | `app/ingestion` | LlamaIndex parse/split/embed; idempotent persistence | Job row records error; re-run is safe |
