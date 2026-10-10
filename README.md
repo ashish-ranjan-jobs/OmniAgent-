@@ -19,6 +19,10 @@ external LLM APIs.
   as unsupported, never as a silent pass).
 - **Idempotent ingestion** (LlamaIndex readers + splitter + BGE embeddings):
   chunk content is SHA-256 hashed; re-ingesting an unchanged corpus is a no-op.
+- **SSE streaming**: `POST /api/v1/research/stream` emits one `node` event per
+  graph step (subqueries, evidence, draft preview, verdict summary -- every
+  reflection round visible as it happens), then `result` with the full response
+  contract, then `done`.
 - **Evaluation, not vibes**: a golden set with labels (including unanswerable
   questions) drives a retrieval ablation (recall@5, MRR, p50 latency per arm) and an
   LLM-judged RAG Triad (context relevance, groundedness, answer relevance +
@@ -40,7 +44,15 @@ Host: Ubuntu 24.04, 2 vCPU AMD EPYC, 7.8 GB RAM, no GPU. All models run locally
   **2 reflection rounds** (MAX_REFLECTIONS budget exhausted -> finalize with the
   claim honestly flagged, not silently retried); `/metrics` recorded the per-node
   LLM calls and the reflection counter.
-- Unit tests: **19 passed** (RRF math, BM25, config, reflection feedback, tolerant
+- SSE live run: `POST /api/v1/research/stream` streamed 13 `node` events with
+  both reflection rounds visible in real time (evidence accumulating 6 -> 7
+  across rounds), then `result` (7 citations, 18 claim verdicts, 2 reflections,
+  290 s wall -- dominated by three full plan/synthesize/verify rounds on the
+  CPU 3B model) and `done`.
+- Ingestion convergence live test: edit + delete + add re-ingest returned
+  {created 2, skipped 1, chunks_deleted 1, documents_removed 1}; the following
+  run was a pure no-op. The index converges to the directory state.
+- Unit tests: **21 passed** (RRF math, BM25, config, reflection feedback, tolerant
   JSON parsing, fake-LLM graph behavior incl. reflection termination and refusal);
   `ruff check` clean.
 - Retrieval ablation on the 24-doc corpus (12 golden queries, top-8):
@@ -73,6 +85,10 @@ curl -s http://localhost:8000/health
 curl -s -X POST http://localhost:8000/api/v1/research \
   -H 'Content-Type: application/json' \
   -d '{"query": "What do the BM25 parameters k1 and b control?"}' | python3 -m json.tool
+# SSE: node events stream live, full result at the end
+curl -N -X POST http://localhost:8000/api/v1/research/stream \
+  -H 'Content-Type: application/json' \
+  -d '{"query": "What is continuous batching?"}'
 make ablation                 # retrieval ablation -> evals/results/
 .venv/bin/python -m app.eval.runner --mode triad   # RAG Triad (needs the LLM backend)
 make test                     # 19 unit tests, no backend required

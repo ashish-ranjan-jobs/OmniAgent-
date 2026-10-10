@@ -90,8 +90,11 @@ Node semantics (each returns a partial state update; LangGraph merges):
   from a reflection edge (`feedback.failed_claims` non-empty), the failed claims
   are embedded in the prompt and `reflection_count += 1`.
 - **research**: hybrid retrieve per subquery (max 4); merge by chunk_id keeping
-  the best per-stage score; cap at 12 evidence; every retrieval timing goes into
-  `trace` (no model call).
+  the best per-stage score. Across reflection rounds evidence ACCUMULATES:
+  prior evidence keeps its position (citation stability -- the draft's [n]
+  citations must keep pointing at the same text after a reflection round) and
+  new chunks append after it, capped with per-round slack. Every retrieval
+  timing goes into `trace` (no model call).
 - **synthesizer**: refusal gate first -- fewer than `REFUSAL_MIN_EVIDENCE`
   chunks means `refused: true` and an honest refusal message, no LLM call.
   Otherwise a grounded draft with `[n]` citations via the strong model.
@@ -137,6 +140,10 @@ Invariants (all unit-tested or structurally guaranteed):
 4. Refused answers never contain generated text from the model (refusal path
    skips the synthesizer LLM call).
 5. Fail-closed verification: no verdict parse -> treated as unsupported.
+6. Citation stability across reflection rounds: prior evidence order is never
+   mutated; new evidence only appends (research node).
+7. Ingestion converges the index to the directory state: vanished chunks are
+   deleted, removed files' documents are dropped (FK cascade).
 
 Error taxonomy (source -> behavior):
 
@@ -182,3 +189,26 @@ Eval: EVAL_GOLDEN_PATH. Every knob has a tested default; env vars override the
   and bounded termination with a budget of 1.
 - Integration (by hand, on the server): migration -> seed (twice) -> live E2E
   query with trace -> ablation -> triad. Results are committed artifacts.
+
+## 10. SSE streaming endpoint (`POST /api/v1/research/stream`)
+
+| event | payload | when |
+|---|---|---|
+| node | `{node, ...compact payload}` | after each graph node completes (planner subqueries; research evidence count + titles; synthesizer draft preview + refused flag; fact-checker claim summary + will_reflect; finalize answer preview) |
+| result | full response contract + `elapsed_ms` | after the run completes (state read via `aget_state`) |
+| error | `{detail}` | LLM backend failure after retries (mid-stream: the HTTP status can no longer change) |
+| done | `{thread_id}` | always terminal |
+
+Implementation: `graph.astream(..., stream_mode="updates")` yields per-node
+updates; a final `aget_state` supplies the full state for `result`. Rationale
+and the token-level upgrade path: ADR-0006.
+
+## 11. Ingestion convergence (deletion sync)
+
+Re-ingesting a directory converges the index to that directory's current
+state: (a) per re-seen source, chunks whose content_hash no longer appears in
+the file are deleted; (b) documents under the directory that were not seen in
+the run are deleted (FK ON DELETE CASCADE removes their chunks). The summary
+reports chunks_created / chunks_skipped / chunks_deleted / documents_removed.
+Verified live: edit + delete + add re-ingest -> {created 2, skipped 1,
+chunks_deleted 1, documents_removed 1}; the next run was a pure no-op.

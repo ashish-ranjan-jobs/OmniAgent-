@@ -34,7 +34,9 @@ async def planner_node(state: OmniAgentState, llm: LLMClient) -> dict:
     raw = data.get("subqueries") if isinstance(data, dict) else None
     subqueries = [
         q.strip() for q in (raw or []) if isinstance(q, str) and q.strip()
-    ][:MAX_SUBQUERIES]
+    ]
+    # Order-preserving dedupe: small models often repeat subqueries.
+    subqueries = list(dict.fromkeys(subqueries))[:MAX_SUBQUERIES]
     if not subqueries:
         subqueries = [state["query"]]  # graceful fallback, always searchable
 

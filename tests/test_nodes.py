@@ -4,6 +4,7 @@ from langgraph.checkpoint.memory import MemorySaver
 
 from app.agents.graph import build_graph
 from app.agents.nodes.planner import planner_node
+from app.agents.nodes.research import research_node
 from app.llm.client import LLMResult
 from app.retrieval.pipeline import Evidence
 
@@ -119,3 +120,36 @@ async def test_reflection_loop_bounded_and_terminates():
     assert result["unsupported_claims"]
     planner_calls = [c for c in llm.calls if c == "planner"]
     assert len(planner_calls) == 2  # initial + one reflection round
+
+
+async def test_planner_dedupes_subqueries():
+    llm = FakeLLM(planner_text='{"subqueries": ["bm25 k1", "bm25 k1", "bm25 b"]}')
+    update = await planner_node({"query": "bm25 parameters"}, llm)
+    assert update["subqueries"] == ["bm25 k1", "bm25 b"]
+
+
+async def test_research_accumulates_evidence_across_rounds():
+    """Reflection rounds must keep prior evidence first (citation stability:
+    the draft's [n] citations must keep pointing at the same text) and append
+    newly retrieved chunks after it, deduped by chunk_id."""
+    retriever = FakeRetriever(["rrf", "bm25", "hnsw", "cross-encoder-rerank"])
+    prior = [
+        {
+            "chunk_id": "c0",
+            "document_id": "d0",
+            "content": "content about rrf",
+            "title": "rrf",
+            "scores": {"rerank": 0.9},
+            "subquery": "q",
+        }
+    ]
+    state = {"query": "q", "subqueries": ["q"], "evidence": prior, "trace": []}
+    update = await research_node(state, retriever)
+    evidence = update["evidence"]
+    ids = [e["chunk_id"] for e in evidence]
+    # Prior evidence is first and untouched; new evidence appended; deduped.
+    assert ids[0] == "c0"
+    assert ids == ["c0", "c1", "c2", "c3"]
+    assert len(set(ids)) == len(ids)
+    # Trace appends without mutating the original list.
+    assert update["trace"][0]["node"] == "research"
