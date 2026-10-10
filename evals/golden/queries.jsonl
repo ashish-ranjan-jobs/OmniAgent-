@@ -10,5 +10,48 @@
 {"query": "How does LangGraph checkpointing support multi-turn conversations without resending history?", "expected_docs": ["langgraph-checkpointing"], "unanswerable": false}
 {"query": "How does the system avoid duplicate chunks when documents are re-ingested?", "expected_docs": ["idempotent-ingestion"], "unanswerable": false}
 {"query": "Why does the system refuse to answer when the evidence is thin?", "expected_docs": ["grounded-refusal"], "unanswerable": false}
+{"query": "How does the choice of K change the behavior of Reciprocal Rank Fusion?", "expected_docs": ["rrf"], "unanswerable": false}
+{"query": "On what kinds of queries does BM25 beat dense embedding retrieval?", "expected_docs": ["bm25", "hybrid-retrieval"], "unanswerable": false}
+{"query": "What do the M and ef_search parameters trade off in an HNSW index?", "expected_docs": ["hnsw"], "unanswerable": false}
+{"query": "What goes wrong if you skip the query prefix when embedding with bge-small-en-v1.5?", "expected_docs": ["bge-embeddings"], "unanswerable": false}
+{"query": "Why is scoring an entire corpus with a cross-encoder infeasible?", "expected_docs": ["cross-encoder-rerank"], "unanswerable": false}
+{"query": "What two-stage cascade does this system use before keeping the final top results?", "expected_docs": ["cross-encoder-rerank"], "unanswerable": false}
+{"query": "Which RAG Triad metric localizes a retrieval problem, and what should you fix when it is low?", "expected_docs": ["rag-triad"], "unanswerable": false}
+{"query": "What does PagedAttention enable between sequences that share the same starting tokens?", "expected_docs": ["paged-attention"], "unanswerable": false}
+{"query": "What scheduler complexity does continuous batching introduce compared to static batching?", "expected_docs": ["continuous-batching"], "unanswerable": false}
+{"query": "Which debugging and human-approval features does LangGraph checkpointing enable?", "expected_docs": ["langgraph-checkpointing"], "unanswerable": false}
+{"query": "How is idempotent ingestion the storage-side twin of idempotency keys in payments?", "expected_docs": ["idempotent-ingestion"], "unanswerable": false}
+{"query": "What verification guardrail pairs with refusal against hallucination in this architecture?", "expected_docs": ["grounded-refusal"], "unanswerable": false}
+{"query": "Why is weighted-sum fusion of dense and BM25 scores fragile compared to rank fusion?", "expected_docs": ["hybrid-retrieval", "rrf"], "unanswerable": false}
+{"query": "How does LoRA fine-tuning reduce the number of trainable parameters, and what happens to the deltas at inference time?", "expected_docs": ["lora-finetuning"], "unanswerable": false}
+{"query": "Does merging LoRA adapters back into base weights add inference latency?", "expected_docs": ["lora-finetuning"], "unanswerable": false}
+{"query": "Why does scaled dot-product attention divide by the square root of the key dimension?", "expected_docs": ["attention-mechanism"], "unanswerable": false}
+{"query": "What do multiple attention heads let a transformer track that a single head cannot?", "expected_docs": ["attention-mechanism"], "unanswerable": false}
+{"query": "What timing and token information does each tracing span carry in an LLM observability setup?", "expected_docs": ["observability-tracing"], "unanswerable": false}
+{"query": "Why are latency histograms preferred over averages when observing LLM call spans?", "expected_docs": ["observability-tracing"], "unanswerable": false}
+{"query": "When does document parsing need OCR, and what content does OCR commonly misread?", "expected_docs": ["document-parsing"], "unanswerable": false}
+{"query": "Why does parsing quality bound the entire downstream RAG pipeline?", "expected_docs": ["document-parsing"], "unanswerable": false}
+{"query": "How does GraphRAG gather multi-hop context from a knowledge graph?", "expected_docs": ["knowledge-graphs"], "unanswerable": false}
+{"query": "What ingest-time costs make knowledge graphs expensive for retrieval?", "expected_docs": ["knowledge-graphs"], "unanswerable": false}
+{"query": "Why do latency-bound services serve a distilled student model instead of the teacher?", "expected_docs": ["model-distillation"], "unanswerable": false}
+{"query": "What extra signal does a teacher's soft probability distribution carry over hard labels?", "expected_docs": ["model-distillation"], "unanswerable": false}
+{"query": "What components pair with multi-head attention inside each transformer block?", "expected_docs": ["transformer-architecture"], "unanswerable": false}
+{"query": "How do encoder and decoder attention differ in a transformer?", "expected_docs": ["transformer-architecture"], "unanswerable": false}
+{"query": "What usually overflows first in long-context GPU serving workloads and why?", "expected_docs": ["gpu-memory-optimization"], "unanswerable": false}
+{"query": "Which techniques reduce GPU memory pressure when serving large models?", "expected_docs": ["gpu-memory-optimization"], "unanswerable": false}
+{"query": "Which prompt techniques improve instruction following on small models?", "expected_docs": ["prompt-engineering"], "unanswerable": false}
+{"query": "What is the tradeoff of chain-of-thought prompting?", "expected_docs": ["prompt-engineering"], "unanswerable": false}
+{"query": "What are the main chunking strategies and how do they trade off?", "expected_docs": ["chunking-strategies"], "unanswerable": false}
+{"query": "Why does chunk overlap matter for retrieval quality?", "expected_docs": ["chunking-strategies"], "unanswerable": false}
+{"query": "How does quantization cut model memory, and what method recovers the lost accuracy?", "expected_docs": ["quantization"], "unanswerable": false}
+{"query": "When should you serve quantized weights instead of full precision?", "expected_docs": ["quantization"], "unanswerable": false}
+{"query": "How does a semantic cache decide that a new question is a cache hit?", "expected_docs": ["semantic-caching"], "unanswerable": false}
+{"query": "What risks does semantic caching introduce and how are they mitigated?", "expected_docs": ["semantic-caching"], "unanswerable": false}
 {"query": "What is the airspeed velocity of an unladen swallow?", "expected_docs": [], "unanswerable": true}
 {"query": "Who won the 2024 UEFA Champions League final and what was the final score?", "expected_docs": [], "unanswerable": true}
+{"query": "How does the Raft consensus algorithm elect a leader after a network partition?", "expected_docs": [], "unanswerable": true}
+{"query": "What is the recipe for baking a sourdough bread starter from scratch?", "expected_docs": [], "unanswerable": true}
+{"query": "How do Redis and Memcached differ in their eviction policies?", "expected_docs": [], "unanswerable": true}
+{"query": "What is the tuition fee structure for international students at Jadavpur University?", "expected_docs": [], "unanswerable": true}
+{"query": "How does Bitcoin adjust the mining difficulty every two weeks?", "expected_docs": [], "unanswerable": true}
+{"query": "What was the box office collection of the movie Inception in India?", "expected_docs": [], "unanswerable": true}

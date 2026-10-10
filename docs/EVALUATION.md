@@ -5,11 +5,13 @@ artefact in `evals/results/` (JSON + Markdown), reproducible with one command.
 
 ## Golden set
 
-`evals/golden/queries.jsonl`: 14 questions over a 24-document corpus
+`evals/golden/queries.jsonl`: 57 questions over a 24-document corpus
 (12 target documents covering RAG/IR topics + 12 vocabulary-overlapping
 distractor documents: LoRA, quantization, attention, caching, tracing...).
-Each entry has `expected_docs` (document-level labels). Two entries are
-**unanswerable** (topics absent from the corpus) to test the refusal path.
+Questions cover every document, including the distractors, so retrieval
+must disambiguate vocabulary-overlapping neighbours. Each entry has
+`expected_docs` (document-level labels). Eight entries are **unanswerable**
+(topics absent from the corpus) to test the refusal path.
 
 ## Mode 1: retrieval ablation (deterministic, no LLM)
 
@@ -41,6 +43,14 @@ code runs with different toggles (`RetrievalStageFlags`).
 Judge = the same local backend (configurable via `EVAL_JUDGE_*` settings);
 judged items include the full graph run latency and reflection count.
 
+## Mode 3: reflection delta (groundedness, hallucination rate)
+
+`make eval-reflection` (or `--mode reflection`) runs every golden item twice:
+once with `MAX_REFLECTIONS=0` (reflection off) and once with the configured
+budget (reflection on). Both arms are scored with the full triad; the report
+isolates the groundedness / hallucination-rate delta attributable to the
+cyclical reflection loop, plus answer/context relevance and refusal deltas.
+
 ## Measured results (this deployment, 2 vCPU / 7.8 GB / no GPU)
 
 Retrieval ablation, 24-doc corpus, 12 answerable questions, top-8:
@@ -68,12 +78,14 @@ committed reports, so any future corpus/model change is measured, not vibes.
 
 ## Extending the evidence (next runs)
 
-1. Grow the corpus 10x with near-duplicate distractor topics; rerun
-   `make ablation` -- expect the sparse leg to contribute recall on
-   identifier-heavy queries (exact model names, parameter names).
-2. Run `--mode triad` with reflection off (`MAX_REFLECTIONS=0`) vs on; report
-   the groundedness delta attributable to the reflection loop.
-3. On a GPU host: vLLM vs Ollama throughput/latency with hardware stated
+1. Grow the corpus with adversarial near-duplicate distractor topics. A
+   staged batch of 24 such documents lives in `data/adversarial/` (deliberately
+   NOT ingested while a measurement run is in flight). After the current run:
+   `cp data/adversarial/*.md data/sample_corpus/ && make seed && make ablation` --
+   expect the sparse leg to contribute recall on identifier-heavy queries (exact
+   model names, parameter names). Then rerun `make eval-reflection` on the
+   larger corpus for a higher-N groundedness delta.
+2. On a GPU host: vLLM vs Ollama throughput/latency with hardware stated
    (ADR-0005) -- no inference numbers are claimed until measured.
 
 ## Limitations

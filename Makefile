@@ -1,7 +1,7 @@
 PY := .venv/bin/python
 PIP := .venv/bin/pip
 
-.PHONY: install db-up db-down migrate seed run test lint ablation docker-app teardown-info
+.PHONY: install db-up db-down migrate seed run test lint ablation eval-triad eval-reflection docker-app teardown-info
 
 install:
 	$(PIP) install -e ".[dev]"
@@ -29,6 +29,12 @@ lint:
 
 ablation:
 	$(PY) -m app.eval.runner --mode ablation
+
+eval-triad:
+	$(PY) -m app.eval.runner --mode triad
+
+eval-reflection:
+	$(PY) -m app.eval.runner --mode reflection
 
 docker-app:
 	docker compose --profile app up -d --build
