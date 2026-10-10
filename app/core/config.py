@@ -36,6 +36,12 @@ class Settings(BaseSettings):
     llm_timeout_s: float = 120.0
     llm_max_retries: int = 2
 
+    # -- llm fallback (off by default; local-first) ---------------------------
+    llm_fallback_enabled: bool = False
+    llm_fallback_base_url: str = ""
+    llm_fallback_api_key: str = ""
+    llm_fallback_model: str = ""
+
     # -- local models -------------------------------------------------------
     embedding_model: str = "BAAI/bge-small-en-v1.5"
     embedding_dim: int = 384

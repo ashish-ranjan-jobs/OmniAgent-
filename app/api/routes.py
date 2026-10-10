@@ -32,7 +32,7 @@ class ResearchRequest(BaseModel):
     thread_id: str | None = None
 
 
-def _initial_state(query: str) -> dict:
+def _initial_state(query: str, *, stream_tokens: bool = False) -> dict:
     """Fresh run state. Every mutable key is reset explicitly so that reusing
     a thread_id never leaks a previous query's evidence/verdicts into a new
     one (LangGraph merges new input into the thread's checkpoint state)."""
@@ -49,6 +49,7 @@ def _initial_state(query: str) -> dict:
         "citations": [],
         "answer": "",
         "trace": [],
+        "stream_tokens": stream_tokens,
     }
 
 
@@ -170,9 +171,10 @@ def _node_payload(node: str, update: dict) -> dict:
 async def research_stream(request: ResearchRequest) -> StreamingResponse:
     """Server-Sent Events stream of a research run.
 
-    Events: `node` (one per graph step, compact payload), `result` (the full
-    response contract including citations, verdicts and trace), `error` (LLM
-    backend failure after retries), `done` (terminal, always sent).
+    Events: `token` (synthesizer text deltas, streamed live), `node` (one per
+    graph step, compact payload), `result` (the full response contract including
+    citations, verdicts and trace), `error` (LLM backend failure after retries),
+    `done` (terminal, always sent).
     """
     graph = await get_graph()
     thread_id = request.thread_id or uuid.uuid4().hex
@@ -181,13 +183,18 @@ async def research_stream(request: ResearchRequest) -> StreamingResponse:
     async def events():
         started = time.perf_counter()
         try:
-            async for update in graph.astream(
-                _initial_state(request.query), config, stream_mode="updates"
+            async for mode, payload in graph.astream(
+                _initial_state(request.query, stream_tokens=True),
+                config,
+                stream_mode=["updates", "custom"],
             ):
-                for node, payload in update.items():
+                if mode == "custom":
+                    yield _sse("token", payload)
+                    continue
+                for node, upd in payload.items():
                     if node == "__start__":
                         continue
-                    yield _sse("node", {"node": node, **_node_payload(node, payload)})
+                    yield _sse("node", {"node": node, **_node_payload(node, upd)})
             snapshot = await graph.aget_state(config)
             result = dict(snapshot.values)
             _emit_metrics(result)

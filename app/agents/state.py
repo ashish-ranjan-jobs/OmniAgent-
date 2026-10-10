@@ -23,4 +23,5 @@ class OmniAgentState(TypedDict, total=False):
     citations: list[dict]  # {n, title, document_id, chunk_id}
     answer: str
     trace: list[dict]  # per-LLM-call {node, model, latency_ms, tokens}
+    stream_tokens: bool  # SSE route: emit synthesizer deltas as custom events
     error: str
