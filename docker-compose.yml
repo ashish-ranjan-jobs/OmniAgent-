@@ -23,6 +23,20 @@ services:
       retries: 10
     mem_limit: 1g
 
+  # Fully-containerized stack: docker compose --profile app --profile ollama up -d
+  # with OLLAMA_URL=http://ollama:11434/v1. Publishes no port on purpose: it is
+  # reachable only on the compose network, and the host's own ollama (used for
+  # local dev + evals) keeps 11434. Pull the model once:
+  #   docker exec omniagent-ollama ollama pull llama3.2:3b
+  ollama:
+    image: ollama/ollama:latest
+    container_name: omniagent-ollama
+    profiles: ["ollama"]
+    restart: unless-stopped
+    volumes:
+      - /opt/omniagent/docker-data/ollama:/root/.ollama
+    mem_limit: 4g
+
   app:
     profiles: ["app"]
     build: .
@@ -34,7 +48,7 @@ services:
     environment:
       APP_ENV: prod
       DB_HOST: db
-      LLM_BASE_URL: http://host.docker.internal:11434/v1
+      LLM_BASE_URL: ${OLLAMA_URL:-http://host.docker.internal:11434/v1}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
